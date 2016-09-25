@@ -1,7 +1,44 @@
-## Unreleased
+## 3.4.3 (August 25, 2016)
+  - Fixed mocking for certain cmdlets containing dynamic parameters in PowerShell 5.1.  [GH-599]
+
+## 3.4.2 (August 2, 2016)
+  - Bug fix when multiple cmdlets with the same name exist in PowerShell 5.1.  [GH-588]
+
+## 3.4.1 (July 22, 2016)
+  - Updated code to use Get-CimInstance if possible, then Get-WmiObject, for Nano compatibility.  [GH-484]
+  - Fixed failure message output of Should BeLike / BeLikeExactly.  [GH-497]
+  - Added some missing information to about_Should help. [GH-519]
+  - Made -OutputFormat parameter optional, defaulting to NUnitXml. [GH-503]
+  - Fix error messsage of Should Throw when null input is provided [GH-521]
+  - Fix mocking bug on functions that contain certain parameter names (Metadata, etc).  [GH-583]
+
+## 3.4.0 (February 29, 2016)
+  - Bug fix for PSv2 when no matching scripts are found by Invoke-Pester.  [GH-441]
+  - Added "Should BeLike" assertion.  [GH-456]
+  - Discarded unwanted pipeline output from BeforeEach / AfterEach / BeforeAll / AfterAll.  [GH-468]
+  - Allowed closures to be used as mocks.  [GH-465]
+  - Fixed invalid NUnit XML output if test script had a syntax error. [GH-467]
+  - Fix for mocking advanced functions that define a parameter named 'Args'.  [GH-471]
+  - Fixed bug when trying to mock a command with a weird name containing a single quotation mark.  [GH-474]
+  - Fixed bug for mocking Cmdlets that do not contain any positional parameters.  [GH-477]
+  - Fixed bug when calling a mocked command from inside the mock.  [GH-478]
+  - Added PesterOption parameter, and a switch to tweak console output for better VSCode extension functionality.  [GH-479]
+
+## 3.3.14 (December 16, 2015)
+  - Fixed Coverage analysis output, which broke in 3.3.12.  [GH-440]
+
+## 3.3.13 (December 10, 2015)
+  - Fixed a bug where mocking Get-Command would result in infinite recursion.  [GH-437]
+
+## 3.3.12 (December 8, 2015)
   - Fixed a bug with mocking dynamic parameters on latest Windows 10 / PSv5 builds.  [GH-419]
   - Fix for NUnit XML export on .NET core.  [GH-420]
+  - Added Set-TestInconclusive command.  [GH-421]
   - Mocking improvements for calling original commands with begin/process/end blocks. [GH-422]
+  - Case insensitive replacement of Test in help [GH-428]
+  - Improve stack trace and exception console output [GH-426]
+  - Added support for intercepting module-qualified calls to a mocked command. [GH-432]
+  - Improved Assert-MockCalled to allow it to be passed an alias as the -CommandName.
 
 ## 3.3.11 (September 8, 2015)
   - Fixed a bug where mocking New-Object would cause a stack overflow.  [GH-405]

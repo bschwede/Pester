@@ -44,9 +44,11 @@ Describe -Tags 'VersionChecks' "Pester manifest and changelog" {
         $script:changelogVersion -as [Version] | Should be ( $script:manifest.Version -as [Version] )
     }
 
-    if (Get-Command git.exe -ErrorAction SilentlyContinue) {
+    if (Get-Command git.exe -ErrorAction SilentlyContinue)
+    {
+        $skipVersionTest = -not [bool]((git remote -v 2>&1) -match "github.com/Pester/")
         $script:tagVersion = $null
-        It "is tagged with a valid version" {
+        It "is tagged with a valid version" -skip:$skipVersionTest {
             $thisCommit = git.exe log --decorate --oneline HEAD~1..HEAD
 
             if ($thisCommit -match 'tag:\s*(\d+(?:\.\d+)*)')
@@ -58,7 +60,7 @@ Describe -Tags 'VersionChecks' "Pester manifest and changelog" {
             $script:tagVersion -as [Version]    | Should Not BeNullOrEmpty
         }
 
-        It "all versions are the same" {
+        It "all versions are the same" -skip:$skipVersionTest {
             $script:changelogVersion -as [Version] | Should be ( $script:manifest.Version -as [Version] )
             $script:manifest.Version -as [Version] | Should be ( $script:tagVersion -as [Version] )
         }
@@ -78,6 +80,37 @@ if ($PSVersionTable.PSVersion.Major -ge 3)
 
         It 'Did not add anything to the $error variable' {
             $error.Count | Should Be 0
+        }
+    }
+
+    InModuleScope Pester {
+        Describe 'SafeCommands table' {
+            $path = $ExecutionContext.SessionState.Module.ModuleBase
+            $filesToCheck = Get-ChildItem -Path $path -Recurse -Include *.ps1,*.psm1 -Exclude *.Tests.ps1
+            $callsToSafeCommands = @(
+                foreach ($file in $files)
+                {
+                    $tokens = $parseErrors = $null
+                    $ast = [System.Management.Automation.Language.Parser]::ParseFile($file.FullName, [ref] $tokens, [ref] $parseErrors)
+                    $filter = {
+                        $args[0] -is [System.Management.Automation.Language.CommandAst] -and
+                        $args[0].InvocationOperator -eq [System.Management.Automation.Language.TokenKind]::Ampersand -and
+                        $args[0].CommandElements[0] -is [System.Management.Automation.Language.IndexExpressionAst] -and
+                        $args[0].CommandElements[0].Target -is [System.Management.Automation.Language.VariableExpressionAst] -and
+                        $args[0].CommandElements[0].Target.VariablePath.UserPath -match '^(?:script:)?SafeCommands$'
+                    }
+
+                    $ast.FindAll($filter, $true)
+                }
+            )
+
+            $uniqueSafeCommands = $callsToSafeCommands | ForEach-Object { $_.CommandElements[0].Index.Value } | Select-Object -Unique
+
+            $missingSafeCommands = $uniqueSafeCommands | Where-Object { -not $script:SafeCommands.ContainsKey($_) }
+
+            It 'The SafeCommands table contains all commands that are called from the module' {
+                $missingSafeCommands | Should Be $null
+            }
         }
     }
 }
